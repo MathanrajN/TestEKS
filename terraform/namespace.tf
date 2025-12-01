@@ -7,4 +7,5 @@ resource "kubernetes_namespace" "taskapi" {
   depends_on = [
     module.eks
   ]
+  
 }

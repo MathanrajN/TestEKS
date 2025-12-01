@@ -1,7 +1,4 @@
 
-# -------------------------------
-# 4. Deploy Helm Chart
-# -------------------------------
 resource "helm_release" "taskapi" {
   provider = helm.eks
   name       = "taskapi"

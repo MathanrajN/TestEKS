@@ -46,12 +46,7 @@ jobs:
       
     if: github.ref == 'refs/heads/main'
 
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-
+   
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -76,8 +71,3 @@ jobs:
           IMAGE_NAME=ghcr.io/$OWNER/task-api:latest
           echo "Pushing image: $IMAGE_NAME"
           docker push $IMAGE_NAME
-
-
-
-
-
