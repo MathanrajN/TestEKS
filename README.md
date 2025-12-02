@@ -8,7 +8,7 @@
     - The application is exposed internally using a ClusterIP service type.  
     - ClusterIP services are not externally accessible unless you use `kubectl port-forward` or configure an ingress/load balancer.  
 - **Container image availability**  
-    - The Docker image is assumed to be publicly accessible (via GHCR or Docker Hub).  
+    - The Docker image is assumed to be publicly accessible (via GHCR).  
     - Private registry authentication is not covered in this setup.  
 - **Terraform state management**  
     - Terraform state files are stored locally.  
@@ -68,7 +68,7 @@ pytest -v
 
 
 ## Build & Run the container Using Docker
-
+ - Verify that the Docker Desktop is running
  - Build the Docker image
 ```
 docker build -t task-api:latest .
@@ -86,7 +86,6 @@ docker run -p 8000:8000 task-api:latest
 docker ps
 ```
 > ✔️ You should see `task-api` listed as an active container
-
 ## Test the application
 
 - Open your browser and access the below url
@@ -127,7 +126,7 @@ http://localhost:8000/tasks
 ```
 docker run -p <port>:<port> -e APP_PORT=<port> task-api
 ```
-> You should be able to access the application using `http://localhost:8000/tasks`
+> You should be able to access the application using `http://localhost:<port>/tasks`
 >
 > Repeat the API testing at `http://localhost:<port>/docs`
 
@@ -140,9 +139,9 @@ docker run -p <port>:<port> -e APP_PORT=<port> task-api
 -  Create a test repository in your Git account
 -  Push this project’s code into that repository using below git commands
 ```
-git remote set-url origin https://github.com/<your-username>/<repo-name>.git  
-git branch -M main  
-git push -u origin main  
+git remote set-url origin https://github.com/<your-username>/<repo-name>.git 
+git branch -M main
+git push -u origin main
 ```
 > This PUSH request to the main branch will automatically trigger workflow.  
 > It will:  
@@ -184,7 +183,7 @@ Terraform configuration will do the following,
 
 - Navigate to terraform folder where we have the configuration files  
 ```
-  cd Task-API-Servic/terraform
+  cd terraform
 ```
 - Configure AWS Account on local machine:
     - Install AWS CLI  
@@ -195,12 +194,10 @@ Terraform configuration will do the following,
 > [!Important]
 > The IAM account used must have permissions to create and manage AWS EKS clusters, VPCs, subnets, IAM roles/policies, and to deploy applications via the Helm provider.
 
-- Navigate to terraform folder where we have the configuration files.  
-```
-  cd Task-API-Service/terraform
-```
-- Review and Update `terraform.tfvars` file - **Optional**
+- Review and Update `terraform.tfvars` file - 
     - This file contains project‑specific variables such as  `aws_region`   `cluster_name`   `namespace`
+    - Please update `aws_region` with the same value which you used while running  `aws configure`
+    -  `cluster_name`  and  `namespace` - If you want you can update it with different values or else leave it as is.
       
 - Review and Update `values_override.yaml.tpl` file - **Optional**
     - By default it will pick up the image from the repository `ghcr.io/poorniman-personal/task-api`
@@ -208,25 +205,25 @@ Terraform configuration will do the following,
         - For Example `ghcr.io/<your-git-username>/task-api`
 - Initialize Terraform  
 ```
-  terraform init
+terraform init
 ```
 > ✔️ Downloads required providers and initializes the working directory.
 - Review the execution plan  
 ```
-  terraform plan 
+terraform plan
 ```
 > ✔️ Shows what resources will be created/modified
 
 - Apply the configuration
 ```
-  terraform apply --auto-approve  
+terraform apply --auto-approve
 ```
 > ✔️ This provisions the AWS EKS cluster and deploys the application.
 - Configure kubectl for EKS Cluster  
    Once the EKS cluster is successfully created, you need to update your local kubeconfig so that `kubectl` can connect to it:
   
     ```
-    aws eks update-kubeconfig --name taskapi-cluster --region <region> 
+    aws eks update-kubeconfig --name taskapi-cluster --region <region>
     ```
 
 ### Validation:
@@ -282,20 +279,50 @@ kubectl port-forward svc/task-api 8000:8000 -n task-api
 ### Follow the [Test the application](#test-the-application) section to do the complete validation.
 
 ✅ To Test using different port 
-
+```
 kubectl port-forward svc/task-api <port>:8000 -n task-api
+```
 
 ### Terraform destroy
  - After completing validation and testing, it’s important to clean up resources to avoid unnecessary costs.
 ```
 terraform state rm kubernetes_namespace.taskapi
+```
+```
 terraform destroy
 ```
 - Type yes when prompted.  
 > ✔️ This command will remove all AWS resources created by your Terraform configuration (EKS cluster, VPC, subnets,helm deployment etc.)
 
-
 ## Use of AI
+ - Copilot and ChatGPT were used to assist with FastAPI, Pytest, and Helm chart code and and troubleshooting issues.  
+   - **Reason for use**  
+      - These technologies were new to me, so I leveraged AI for learning and to generate a base scaffolding of code and configuration  
+      - However, I did not completely depend on AI — instead, I first studied the concepts through official documentation and YouTube tutorials, then refined and updated            the AI‑generated output.  
+   - **What went well?**  
+      - Saved time by quickly identifying root causes of errors such as EKS authentication and kubeconfig issues, provider configuration errors.  
+      - Provided structured explanations with the reason for the error and step‑by‑step fixes that reduced trial‑and‑error time.  
+   - **Manual Changes Required?**  
+      - Although AI provided initial drafts, all output required manual refinement, including:  
+          - The GET /tasks endpoint was updated to include an ID field for each task, based on insights from a YouTube tutorial.  
+          - Updated Helm chart paths and value file and yaml files references to match the out project  requirement.  
+    - **How did you verify the AI output?**  
+         - Verified the output by running commands like `pytest` `terraform` `kubectl` locally  
+         - Validated the cluster health and deployments by follwing the steps mentioned in [Validation](#validation)  
+
+## References:
+- [FastAPI Document](https://fastapi.tiangolo.com/)  
+- [FastAPI Tutorial](https://www.youtube.com/watch?v=rvFsGRvj9jo)  
+- [Pytest](https://docs.pytest.org/en/stable/example/)  
+- [Pytest Tutorial](https://www.youtube.com/watch?v=7dgQRVqF1N0&list=LL&index=1)  
+- [GithubCI](https://docs.github.co)  
+- [TerraformEKS](https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest)   
+- [TerraformKubernetes](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs)  
+- [TerraformHelm](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs)  
+
+
+
+
 
 
 
